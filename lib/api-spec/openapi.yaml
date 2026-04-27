@@ -1,0 +1,192 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: Group availability calendar API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: users
+    description: User operations
+  - name: availability
+    description: Availability operations
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /users:
+    get:
+      operationId: getUsers
+      tags: [users]
+      summary: Get all users
+      description: Returns all registered users
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+    post:
+      operationId: createUser
+      tags: [users]
+      summary: Create or get user
+      description: Creates a new user or returns existing one by nickname
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserBody"
+      responses:
+        "200":
+          description: User created or found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+  /availability:
+    get:
+      operationId: getAvailability
+      tags: [availability]
+      summary: Get all availability data
+      description: Returns all dates with their available users
+      responses:
+        "200":
+          description: Availability data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DateAvailability"
+  /availability/toggle:
+    post:
+      operationId: toggleAvailability
+      tags: [availability]
+      summary: Toggle user availability for a date
+      description: Adds or removes a user from availability for a specific date
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ToggleAvailabilityBody"
+      responses:
+        "200":
+          description: Updated availability for the date
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DateAvailability"
+  /availability/summary:
+    get:
+      operationId: getAvailabilitySummary
+      tags: [availability]
+      summary: Get availability summary
+      description: Returns dates grouped by count of available users, useful for finding best meeting dates
+      responses:
+        "200":
+          description: Summary of availability
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AvailabilitySummary"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        nickname:
+          type: string
+        emoji:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - nickname
+        - emoji
+        - createdAt
+    CreateUserBody:
+      type: object
+      properties:
+        nickname:
+          type: string
+          minLength: 1
+          maxLength: 30
+        emoji:
+          type: string
+      required:
+        - nickname
+        - emoji
+    DateAvailability:
+      type: object
+      properties:
+        date:
+          type: string
+          description: Date in YYYY-MM-DD format
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/User"
+        count:
+          type: integer
+      required:
+        - date
+        - users
+        - count
+    ToggleAvailabilityBody:
+      type: object
+      properties:
+        date:
+          type: string
+          description: Date in YYYY-MM-DD format
+        userId:
+          type: integer
+      required:
+        - date
+        - userId
+    AvailabilitySummary:
+      type: object
+      properties:
+        topDates:
+          type: array
+          items:
+            $ref: "#/components/schemas/DateAvailability"
+          description: Top dates sorted by most people available
+        totalUsers:
+          type: integer
+        totalDaysMarked:
+          type: integer
+      required:
+        - topDates
+        - totalUsers
+        - totalDaysMarked
