@@ -90,33 +90,52 @@ export function CalendarView({ currentUser, onLogout }: { currentUser: User; onL
 
       <main className="max-w-5xl mx-auto px-4 py-8 space-y-12">
         {/* Summary Banner */}
-        {summary && summary.topDates.length > 0 && (
-          <div className="bg-secondary rounded-3xl p-6 md:p-8 border-2 border-secondary-foreground/10 shadow-xl flex flex-col md:flex-row items-center gap-8 relative overflow-hidden">
-            <div className="absolute -right-10 -top-10 w-40 h-40 bg-secondary-foreground/5 rounded-full blur-2xl" />
-            <div className="absolute -left-10 -bottom-10 w-40 h-40 bg-background/40 rounded-full blur-2xl" />
+        {(() => {
+          const today = new Date(new Date().toDateString());
+          const viewedYear = currentDate.getFullYear();
+          const viewedMonth = currentDate.getMonth();
+          const monthTopDates = summary
+            ? summary.topDates.filter((d) => {
+                const dt = new Date(d.date + "T00:00:00");
+                return dt.getFullYear() === viewedYear && dt.getMonth() === viewedMonth && dt >= today;
+              })
+            : [];
+          if (!summary) return null;
+          return (
+            <div className="bg-secondary rounded-3xl p-6 md:p-8 border-2 border-secondary-foreground/10 shadow-xl flex flex-col md:flex-row items-center gap-8 relative overflow-hidden">
+              <div className="absolute -right-10 -top-10 w-40 h-40 bg-secondary-foreground/5 rounded-full blur-2xl" />
+              <div className="absolute -left-10 -bottom-10 w-40 h-40 bg-background/40 rounded-full blur-2xl" />
 
-            <div className="flex-1 text-center md:text-left relative z-10">
-              <h2 className="text-3xl font-black text-secondary-foreground mb-2">大家最多人有空的日期</h2>
-              <p className="text-secondary-foreground/80 font-bold text-lg">
-                共 {summary.totalUsers} 人參與，已標記 {summary.totalDaysMarked} 天
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-4 justify-center relative z-10">
-              {summary.topDates.slice(0, 3).map((date) => (
-                <div
-                  key={date.date}
-                  className="bg-card rounded-2xl p-4 shadow-lg border-2 border-border text-center min-w-[110px] transform transition-transform hover:-translate-y-2"
-                >
-                  <div className="text-sm font-black text-primary mb-1 uppercase tracking-widest">
-                    {format(new Date(date.date + "T00:00:00"), "M月d日", { locale: zhTW })}
-                  </div>
-                  <div className="text-3xl font-black text-foreground">{date.count}</div>
-                  <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider mt-1">人有空</div>
+              <div className="flex-1 text-center md:text-left relative z-10">
+                <h2 className="text-3xl font-black text-secondary-foreground mb-2">
+                  {format(currentDate, "M月", { locale: zhTW })}大家最多人有空的日期
+                </h2>
+              </div>
+              {monthTopDates.length > 0 ? (
+                <div className="flex flex-wrap gap-4 justify-center relative z-10">
+                  {monthTopDates.slice(0, 3).map((date) => (
+                    <div
+                      key={date.date}
+                      className="bg-card rounded-2xl p-4 shadow-lg border-2 border-border text-center min-w-[110px] transform transition-transform hover:-translate-y-2"
+                    >
+                      <div className="text-sm font-black text-primary mb-1 uppercase tracking-widest">
+                        {format(new Date(date.date + "T00:00:00"), "M月d日", { locale: zhTW })}
+                      </div>
+                      <div className="text-3xl font-black text-foreground">{date.count}</div>
+                      <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider mt-1">人有空</div>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              ) : (
+                <div className="relative z-10 bg-card/60 rounded-2xl px-6 py-5 border-2 border-dashed border-secondary-foreground/20 text-center">
+                  <div className="text-4xl mb-2">📭</div>
+                  <p className="font-black text-secondary-foreground text-base">這個月還沒有人排定有空的日期</p>
+                  <p className="text-secondary-foreground/60 text-sm font-medium mt-1">快去點選日期，讓大家知道你有空！</p>
+                </div>
+              )}
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Calendar Controller */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-2">

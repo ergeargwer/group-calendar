@@ -24,7 +24,7 @@ export function SetupScreen({ onComplete }: { onComplete: () => void }) {
         onSuccess: (user) => {
           setIdentity(user);
           onComplete();
-        }
+        },
       }
     );
   };
@@ -52,6 +52,12 @@ export function SetupScreen({ onComplete }: { onComplete: () => void }) {
                 required
               />
             </div>
+
+            {createUser.isError && (
+              <div className="text-sm font-semibold text-destructive bg-destructive/10 border border-destructive/30 rounded-xl px-4 py-3 text-center">
+                連線失敗，請檢查網路後再試一次
+              </div>
+            )}
 
             <Button
               type="submit"

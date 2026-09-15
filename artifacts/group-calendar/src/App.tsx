@@ -4,7 +4,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import { useState, useEffect } from "react";
-import { getIdentity, User } from "./lib/identity";
+import { getIdentity } from "./lib/identity";
+import type { User } from "@workspace/api-client-react";
 import { SetupScreen } from "./components/SetupScreen";
 import { CalendarView } from "./components/CalendarView";
 

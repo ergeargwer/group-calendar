@@ -6,8 +6,13 @@ import { eq } from "drizzle-orm";
 const router = Router();
 
 router.get("/", async (req, res) => {
-  const users = await db.select().from(usersTable).orderBy(usersTable.createdAt);
-  res.json(users);
+  try {
+    const users = await db.select().from(usersTable).orderBy(usersTable.createdAt);
+    res.json(users);
+  } catch (err) {
+    req.log.error({ err, detail: (err as any)?.cause ?? err }, "DB error in GET /users");
+    res.status(500).json({ error: "Database error", detail: String(err) });
+  }
 });
 
 router.post("/", async (req, res) => {
@@ -19,19 +24,24 @@ router.post("/", async (req, res) => {
 
   const { nickname, emoji } = parsed.data;
 
-  const existing = await db
-    .select()
-    .from(usersTable)
-    .where(eq(usersTable.nickname, nickname))
-    .limit(1);
+  try {
+    const existing = await db
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.nickname, nickname))
+      .limit(1);
 
-  if (existing.length > 0) {
-    res.json(existing[0]);
-    return;
+    if (existing.length > 0) {
+      res.json(existing[0]);
+      return;
+    }
+
+    const [created] = await db.insert(usersTable).values({ nickname, emoji }).returning();
+    res.json(created);
+  } catch (err) {
+    req.log.error({ err, detail: (err as any)?.cause ?? err }, "DB error in POST /users");
+    res.status(500).json({ error: "Database error", detail: String(err) });
   }
-
-  const [created] = await db.insert(usersTable).values({ nickname, emoji }).returning();
-  res.json(created);
 });
 
 export default router;
