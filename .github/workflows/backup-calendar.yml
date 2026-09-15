@@ -1,0 +1,40 @@
+name: Backup calendar data
+
+on:
+  schedule:
+    - cron: "0 16 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch shared calendar
+        run: |
+          mkdir -p data artifacts/group-calendar/public/data
+          python3 - <<'PY'
+          import json, urllib.parse, urllib.request, pathlib
+          url = "https://rentry.org/api/fetch/ergeargwer-group-calendar"
+          body = urllib.parse.urlencode({"edit_code": "gc-share-2026"}).encode()
+          req = urllib.request.Request(url, data=body, method="POST")
+          with urllib.request.urlopen(req, timeout=30) as resp:
+              payload = json.load(resp)
+          text = payload.get("content", {}).get("text") or "{}"
+          data = json.loads(text)
+          raw = json.dumps(data, ensure_ascii=False, indent=2) + "\n"
+          for path in ("data/calendar.json", "artifacts/group-calendar/public/data/calendar.json"):
+              pathlib.Path(path).write_text(raw, encoding="utf-8")
+          print("backed up", len(data.get("users", [])), "users")
+          PY
+      - name: Commit snapshot
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/calendar.json artifacts/group-calendar/public/data/calendar.json
+          git diff --cached --quiet && echo "No calendar changes" && exit 0
+          git commit -m "chore: backup shared calendar snapshot"
+          git push

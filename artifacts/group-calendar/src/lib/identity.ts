@@ -1,4 +1,4 @@
-import { User } from "@workspace/api-client-react";
+import type { User } from "./types";
 
 const IDENTITY_KEY = "group_calendar_identity";
 
@@ -6,8 +6,8 @@ export function getIdentity(): User | null {
   try {
     const data = localStorage.getItem(IDENTITY_KEY);
     if (!data) return null;
-    return JSON.parse(data);
-  } catch (e) {
+    return JSON.parse(data) as User;
+  } catch {
     return null;
   }
 }

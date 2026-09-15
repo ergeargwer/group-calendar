@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useCreateUser } from "@workspace/api-client-react";
+import { useCreateUser } from "../lib/api";
 import { setIdentity } from "../lib/identity";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

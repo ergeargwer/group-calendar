@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isToday } from "date-fns";
 import { zhTW } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, LogOut } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, LogOut, Share2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   useGetAvailability,
@@ -9,11 +9,12 @@ import {
   useToggleAvailability,
   useGetAvailabilitySummary,
   getGetAvailabilitySummaryQueryKey,
-} from "@workspace/api-client-react";
-import type { User } from "@workspace/api-client-react";
+} from "../lib/api";
+import type { User } from "../lib/types";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { clearIdentity } from "../lib/identity";
+import { getRoomId } from "../lib/store";
 
 const WEEKDAYS = ["一", "二", "三", "四", "五", "六", "日"];
 
@@ -23,21 +24,36 @@ function shortName(nickname: string): string {
 
 export function CalendarView({ currentUser, onLogout }: { currentUser: User; onLogout: () => void }) {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [copied, setCopied] = useState(false);
   const queryClient = useQueryClient();
+  const roomId = getRoomId();
 
-  const { data: availability = [], isLoading } = useGetAvailability({
-    query: { queryKey: getGetAvailabilityQueryKey() },
-  });
-
-  const { data: summary } = useGetAvailabilitySummary({
-    query: { queryKey: getGetAvailabilitySummaryQueryKey() },
-  });
+  const { data: availability = [], isLoading } = useGetAvailability();
+  const { data: summary } = useGetAvailabilitySummary();
 
   const toggleMutation = useToggleAvailability();
 
   const handleLogout = () => {
     clearIdentity();
     onLogout();
+  };
+
+  const handleShare = async () => {
+    const url = new URL(window.location.href);
+    url.hash = "";
+    if (roomId === "main") {
+      url.searchParams.delete("g");
+    } else {
+      url.searchParams.set("g", roomId);
+    }
+    const shareUrl = url.toString();
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      window.prompt("複製這個連結給朋友：", shareUrl);
+    }
   };
 
   const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
@@ -75,7 +91,16 @@ export function CalendarView({ currentUser, onLogout }: { currentUser: User; onL
             <h1 className="text-2xl font-black tracking-tight text-foreground hidden sm:block">揪團日曆</h1>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              onClick={handleShare}
+              className="rounded-2xl border-2 border-border bg-card px-4 py-2 h-auto font-bold"
+              title="複製連結給朋友"
+            >
+              <Share2 className="w-4 h-4" />
+              {copied ? "已複製" : "分享"}
+            </Button>
             <button
               onClick={handleLogout}
               className="group flex items-center gap-3 bg-card hover:bg-muted border-2 border-border px-4 py-2 rounded-2xl transition-all hover:scale-105 active:scale-95"
