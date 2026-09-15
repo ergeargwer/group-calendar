@@ -49,6 +49,7 @@ export async function pushRemote(roomId: string, data: CalendarData): Promise<vo
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body,
+    signal: AbortSignal.timeout(8000),
   });
 
   if (editResponse.ok) {
@@ -68,6 +69,7 @@ async function fetchRentry(target: RemoteTarget): Promise<CalendarData | null> {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body,
+    signal: AbortSignal.timeout(8000),
   });
   if (!response.ok) return null;
 
@@ -96,6 +98,7 @@ async function createRentry(target: RemoteTarget, data: CalendarData): Promise<b
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body,
+    signal: AbortSignal.timeout(8000),
   });
   if (!response.ok) return false;
   const result = (await response.json()) as { status?: string };
@@ -110,7 +113,7 @@ async function fetchGithubSnapshot(): Promise<CalendarData | null> {
 
   for (const url of urls) {
     try {
-      const response = await fetch(url, { cache: "no-store" });
+      const response = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(8000) });
       if (!response.ok) continue;
       return normalize(await response.json());
     } catch {

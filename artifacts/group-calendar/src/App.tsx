@@ -25,13 +25,17 @@ function Home() {
 
   useEffect(() => {
     let cancelled = false;
+    const user = resolveUser(getIdentity());
+    if (user) setCurrentUser(user);
+    setIsInitializing(false);
 
     void (async () => {
       await hydrateCalendar();
       if (cancelled) return;
-      const user = resolveUser(getIdentity());
-      if (user) setCurrentUser(user);
-      setIsInitializing(false);
+      const synced = resolveUser(getIdentity());
+      if (synced) setCurrentUser(synced);
+      queryClientFromHook.invalidateQueries({ queryKey: getGetAvailabilityQueryKey() });
+      queryClientFromHook.invalidateQueries({ queryKey: getGetAvailabilitySummaryQueryKey() });
     })();
 
     const interval = window.setInterval(() => {
